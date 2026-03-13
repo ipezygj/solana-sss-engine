@@ -18,19 +18,24 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Upgrade Engine & Build
+      - name: Forge Engine & Build
         run: |
-          echo "Stealth Engine Upgrade Starting: $(date)"
+          echo "Stealth Forge Starting: $(date)"
           
-          # 1. Asennetaan uusi Rust (tämä toimii jo täydellisesti!)
+          # 1. Päivitetään uusi Rust-kääntäjä
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
           export PATH="$HOME/.cargo/bin:$PATH"
-          
-          # Poistetaan vanha lukko
           rm -f Cargo.lock
           
-          # 2. PÄIVITETÄÄN ANCHOR (Käytetään pomminvarmaa NPM:ää AVM:n sijaan!)
-          npm install -g @coral-xyz/anchor-cli@0.31.2 --force
+          # Siivotaan NPM-sotkut alta pois
+          npm uninstall -g @coral-xyz/anchor-cli || true
+          
+          # 2. THE BLACKSMITH METHOD: Taotaan Anchor 0.31.2 suoraan lähdekoodista!
+          # Tämä sovittaa työkalun täydellisesti nykyiseen runkoon.
+          echo "Forging custom Anchor CLI... This will take ~5-8 minutes. Patience!"
+          cargo install anchor-cli --locked --version 0.31.2
+          
+          # Varmistus
           anchor --version
           
           # 3. RAKENNETAAN MOOTTORI
@@ -49,5 +54,5 @@ jobs:
           
           # Pakotetaan IDL näkyviin holvissa
           git add -f target/idl/*.json || true
-          git commit -m "chore: reveal idl payload [$(date)]" || echo "No changes"
+          git commit -m "chore: materialize idl payload [$(date)]" || echo "No changes"
           git push
