@@ -18,52 +18,54 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: The Split & Precision Pin
+      - name: The Oracle's Nuke Build
         run: |
-          echo "Stealth Precision Pin V4 Starting: $(date)"
+          echo "Stealth Nuclear Strike Starting: $(date)"
           
-          # 1. AIKAKONE
+          # 1. AIKAKONE 1.75.0 (Vain Anchor CLI:tä varten)
+          echo "=== Phase 1: Build Anchor CLI ==="
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.75.0
           export PATH="$HOME/.cargo/bin:$PATH"
+          
+          # Haamujen siivous
           find . -name "Cargo.lock" -type f -delete
           
-          # 2. TAOTAAN ANCHOR 0.30.0
+          # Taotaan Anchor
           echo "Forging Anchor CLI 0.30.0..."
           cargo install anchor-cli --locked --version 0.30.0
           
-          # 3. TYÖKALUJEN VAIHTO
-          echo "Switching to latest stable Rust..."
-          rustup default stable
-          rustup update
+          # 2. THE SMART GLOBAL SOLUTION: Vaihto 1.68.0 -kääntäjään
+          echo "=== Phase 2: Generate Rust 1.68-compatible lockfile ==="
+          rustup install 1.68.0
+          rustup default 1.68.0
           
-          # 4. ANCHORIN TURVAVYÖ
-          echo "Injecting Anchor's mandatory seatbelt..."
+          # 3. THE NUCLEAR PATCH: Kaikkien myyrien tappo kerralla + Anchorin turvavyö
+          echo "Injecting Nuclear Patch and Seatbelt..."
           cat >> Cargo.toml << 'EOF'
 
           [profile.release]
           overflow-checks = true
+
+          [patch.crates-io]
+          blake3 = { version = "=1.5.0" }
+          toml_edit = { version = "=0.21.0" }
+          toml_datetime = { version = "=0.6.3" }
+          serde_json = { version = "=1.0.146" }
+          ryu = { version = "=1.0.16" }
           EOF
           
-          # 5. WHACK-A-MOLE: Kiinnitetään tulevaisuuden paketit!
-          echo "Generating lockfile and precision-pinning future crates..."
+          # 4. GENERATE LOCKFILE: Nyt Cargo itse ymmärtää rajoitukset
+          echo "Generating 1.68.0 Lockfile..."
           cargo generate-lockfile
           
-          # Edition 2024 kiertäminen
-          cargo update -p blake3 --precise 1.5.0 || true
+          # 5. JEDI MIND TRICK: Varmistetaan V3-muoto
+          echo "Downgrading lockfile format if needed..."
+          if grep -q "version = 4" Cargo.lock; then
+              sed -i 's/version = 4/version = 3/' Cargo.lock
+          fi
           
-          # Solanan (rustc 1.68) yhteensopivuuskorjaukset
-          cargo update -p toml_edit --precise 0.21.0 || true
-          cargo update -p toml_datetime --precise 0.6.3 || true
-          
-          # KÄÄRMEENTAPPAJA: Palautetaan serde_json aikaan ennen käärmettä!
-          cargo update -p serde_json --precise 1.0.146 || true
-          
-          # 6. JEDI MIND TRICK: V4 -> V3
-          echo "Downgrading lockfile format from V4 to V3..."
-          sed -i 's/version = 4/version = 3/g' Cargo.lock
-          
-          # 7. RAKENNETAAN MOOTTORI
-          echo "Igniting Anchor Build..."
+          # 6. RAKENNETAAN MOOTTORI
+          echo "=== Phase 3: Build program ==="
           anchor build
           
           echo "Scanning target for IDL..."
