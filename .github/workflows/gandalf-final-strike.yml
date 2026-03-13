@@ -20,21 +20,22 @@ jobs:
 
       - name: Force Clean Build
         run: |
-          echo "Stealth Time-Machine Build Starting: $(date)"
+          echo "Stealth Supreme Bypass Starting: $(date)"
           
-          # 1. AIKAKONE: Asennetaan Rust 1.75.0 (vakaa versio Anchor 0.30:lle)
+          # 1. AIKAKONE (Pidetään tämä, se toimi!)
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.75.0
           export PATH="$HOME/.cargo/bin:$PATH"
           
-          # 2. PUHDISTUS: Nuketaan kaikki haitalliset lukot
+          # 2. PUHDISTUS
           find . -name "Cargo.lock" -type f -delete
           
-          # 3. TAOTAAN ANCHOR 0.30.0
-          echo "Forging Anchor CLI 0.30.0 with Rust 1.75.0..."
+          # 3. TAOTAAN ANCHOR 0.30.0 (Tämäkin on jo testattu ja toimii)
+          echo "Forging Anchor CLI 0.30.0..."
           cargo install anchor-cli --locked --version 0.30.0
           
-          # 4. RAKENNETAAN MOOTTORI
-          echo "Igniting Anchor Build..."
+          # 4. SUPREME BYPASS: Pakotetaan overflow-checks ympäristömuuttujalla!
+          echo "Igniting Anchor Build with Supreme Bypass..."
+          export RUSTFLAGS="-C overflow-checks=on"
           anchor build
           
           echo "Scanning target for IDL..."
