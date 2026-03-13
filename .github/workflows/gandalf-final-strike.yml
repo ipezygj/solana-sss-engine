@@ -20,7 +20,7 @@ jobs:
 
       - name: The Split & Precision Pin
         run: |
-          echo "Stealth Precision Pin V3 Starting: $(date)"
+          echo "Stealth Precision Pin V4 Starting: $(date)"
           
           # 1. AIKAKONE
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.75.0
@@ -44,16 +44,19 @@ jobs:
           overflow-checks = true
           EOF
           
-          # 5. WHACK-A-MOLE: Kiinnitetään KAIKKI tulevaisuuden paketit!
+          # 5. WHACK-A-MOLE: Kiinnitetään tulevaisuuden paketit!
           echo "Generating lockfile and precision-pinning future crates..."
           cargo generate-lockfile
           
           # Edition 2024 kiertäminen
           cargo update -p blake3 --precise 1.5.0 || true
-          # Solanan kääntäjän (rustc 1.68) yhteensopivuuskorjaukset
+          
+          # Solanan (rustc 1.68) yhteensopivuuskorjaukset
           cargo update -p toml_edit --precise 0.21.0 || true
           cargo update -p toml_datetime --precise 0.6.3 || true
-          cargo update -p zstd --precise 0.11.2+zstd.1.5.2 || true
+          
+          # KÄÄRMEENTAPPAJA: Palautetaan serde_json aikaan ennen käärmettä!
+          cargo update -p serde_json --precise 1.0.146 || true
           
           # 6. JEDI MIND TRICK: V4 -> V3
           echo "Downgrading lockfile format from V4 to V3..."
