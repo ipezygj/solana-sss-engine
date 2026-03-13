@@ -22,11 +22,13 @@ jobs:
         run: |
           echo "Stealth Engine Upgrade Starting: $(date)"
           
-          # 1. MEKAANIKON LEKA: Asennetaan uusi Rust suoraan GitHubin vaatimaan polkuun!
+          # 1. Asennetaan uusi Rust (Tämä toimii jo täydellisesti!)
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          source "$HOME/.cargo/env"
           
-          # Poistetaan vanha lukko, jotta uusi Rust saa tehdä omansa
+          # KORJAUS: Lisätään uusi Rust suoraan polkuun sh-yhteensopivasti
+          export PATH="$HOME/.cargo/bin:$PATH"
+          
+          # Poistetaan vanha lukko
           rm -f Cargo.lock
           
           # 2. PÄIVITETÄÄN ANCHOR (0.31.2)
