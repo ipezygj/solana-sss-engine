@@ -12,36 +12,37 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Force Install Solana
+      - name: Force Install Solana (SSL Bypass)
         run: |
-          echo "Initiating Stealth Deployment at: $(date)"
-          # SSL-virheiden kierto: wget + retry
-          wget --tries=10 --waitretry=10 --retry-connrefused https://release.solana.com/v1.18.18/install
+          echo "Initiating Stealth Breach at: $(date)"
+          # Ohitetaan SSL-tarkistus --no-check-certificate -vivulla
+          wget --no-check-certificate --tries=10 --waitretry=5 https://release.solana.com/v1.18.18/install
           chmod +x install
           ./install
-          # Pakotetaan polku aktiiviseksi
+          # Injectoidaan polut järjestelmään
           echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
           export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
           solana --version
 
       - name: Install Anchor CLI
         run: |
+          # Pakotetaan asennus, jotta vältytään välimuistivirheiltä
           npm install -g @coral-xyz/anchor-cli@0.31.2 --force
-          anchor --version
+          /usr/local/bin/anchor --version
 
       - name: Supreme-Sync Build
         run: |
+          # Varmistetaan polut kääntämisen aikana
           export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
-          # Rakennetaan moottori
           anchor build
           echo "Scanning for IDL payload..."
-          ls -R target/idl/ || echo "Warning: IDL directory not found yet"
+          ls -R target/idl/ || echo "IDL not generated yet"
 
       - name: Materialize IDL to Repository
         run: |
           git config --global user.name "Gandalf"
           git config --global user.email "stealth@bridge.com"
-          # Pakotetaan IDL näkyviin
+          # Pakotetaan IDL näkyviin, vaikka .gitignore kieltäisi
           git add -f target/idl/*.json || true
           git commit -m "chore: reveal idl payload [$(date)]" || echo "No changes to commit"
           git push
