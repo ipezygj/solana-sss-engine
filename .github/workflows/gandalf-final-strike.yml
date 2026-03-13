@@ -22,18 +22,15 @@ jobs:
         run: |
           echo "Stealth Engine Upgrade Starting: $(date)"
           
-          # 1. Asennetaan uusi Rust (Tämä toimii jo täydellisesti!)
+          # 1. Asennetaan uusi Rust (tämä toimii jo täydellisesti!)
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          
-          # KORJAUS: Lisätään uusi Rust suoraan polkuun sh-yhteensopivasti
           export PATH="$HOME/.cargo/bin:$PATH"
           
           # Poistetaan vanha lukko
           rm -f Cargo.lock
           
-          # 2. PÄIVITETÄÄN ANCHOR (0.31.2)
-          avm install 0.31.2
-          avm use 0.31.2
+          # 2. PÄIVITETÄÄN ANCHOR (Käytetään pomminvarmaa NPM:ää AVM:n sijaan!)
+          npm install -g @coral-xyz/anchor-cli@0.31.2 --force
           anchor --version
           
           # 3. RAKENNETAAN MOOTTORI
