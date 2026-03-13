@@ -18,9 +18,9 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: The Oracle Split & Final Bolt
+      - name: The Split & Precision Pin
         run: |
-          echo "Stealth Split-Toolchain + Final Bolt Starting: $(date)"
+          echo "Stealth Precision Pin Starting: $(date)"
           
           # 1. AIKAKONE: Rust 1.75.0 Anchorin kääntämiseen
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.75.0
@@ -30,7 +30,7 @@ jobs:
           find . -name "Cargo.lock" -type f -delete
           
           # 2. TAOTAAN ANCHOR 0.30.0
-          echo "Forging Anchor CLI 0.30.0 with Rust 1.75.0..."
+          echo "Forging Anchor CLI 0.30.0..."
           cargo install anchor-cli --locked --version 0.30.0
           
           # 3. TYÖKALUJEN VAIHTO: Uusin Rust moottorille
@@ -38,18 +38,20 @@ jobs:
           rustup default stable
           rustup update
           
-          # 4. THE ULTIMATE PATCH: Blake3 + Overflow Checks yhdessä!
-          echo "Applying Oracle's patch AND Anchor's mandatory seatbelt..."
+          # 4. ANCHORIN TURVAVYÖ
+          echo "Injecting Anchor's mandatory seatbelt..."
           cat >> Cargo.toml << 'EOF'
-
-          [patch.crates-io]
-          blake3 = { version = "=1.5.0" }
 
           [profile.release]
           overflow-checks = true
           EOF
           
-          # 5. RAKENNETAAN MOOTTORI
+          # 5. THE PRECISION PIN: Pakotetaan blake3 versio oikeaoppisesti!
+          echo "Generating lockfile and precision-pinning blake3 to v1.5.0..."
+          cargo generate-lockfile
+          cargo update -p blake3 --precise 1.5.0 || echo "Blake3 pin failed or not present, continuing..."
+          
+          # 6. RAKENNETAAN MOOTTORI
           echo "Igniting Anchor Build..."
           anchor build
           
