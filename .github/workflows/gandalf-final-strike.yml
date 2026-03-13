@@ -11,9 +11,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # Käytetään Coral-XYZ:n virallista modernia konttia
+    # Vaihdetaan Docker Hubin viralliseen ja varmimpaan kuvaan
     container:
-      image: ghcr.io/coral-xyz/anchor-build:v0.31.0
+      image: coralxyz/anchor:0.31.0
     
     steps:
       - name: Checkout Code
@@ -21,19 +21,15 @@ jobs:
 
       - name: Build Program
         run: |
-          echo "Stealth Build 0.31.2 Starting: $(date)"
+          echo "Stealth Build 0.31.0+ Starting: $(date)"
           
-          # Pakotetaan Rust päivittymään, jos kontti on hieman jäljessä
-          rustup update stable
-          rustup default stable
-          
-          # MEKAANIKON KIKKA: Varmistetaan että olemme oikeassa versiossa
-          # Jos Anchor.toml vaatii 0.31.2, avm hoitaa sen
-          avm install 0.31.2 || echo "Using container default anchor"
-          avm use 0.31.2 || echo "Continuing with current version"
+          # MEKAANIKON KIKKA: Poistetaan vanha lukkotiedosto, jotta uusi kääntäjä 
+          # voi luoda puhtaan ja yhteensopivan version automaattisesti.
+          rm -f Cargo.lock
           
           # Rakennetaan moottori
           anchor build
+          
           echo "Scanning target for IDL..."
           ls -R target/idl/
 
@@ -46,5 +42,5 @@ jobs:
           
           # Pakotetaan IDL näkyviin holvissa
           git add -f target/idl/*.json || true
-          git commit -m "chore: materialize idl 0.31.2 [$(date)]" || echo "No changes"
+          git commit -m "chore: reveal idl payload [$(date)]" || echo "No changes"
           git push
