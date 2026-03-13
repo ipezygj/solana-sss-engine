@@ -3,5 +3,5 @@ members = [
     "programs/*"
 ]
 
-[profile.release]
-overflow-checks = true
+# Poistetaan overflow-checks toistaiseksi, jotta saamme buildin läpi
+# ilman versioristiriitoja 0.30.0:ssa.
