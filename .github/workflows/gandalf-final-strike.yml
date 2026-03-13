@@ -18,51 +18,40 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: The Absolute Override Build
+      - name: The IDL Extraction Strike
         run: |
-          echo "Stealth Absolute Override Starting: $(date)"
+          echo "Titan Scaling Initiative: IDL Extraction Starting..."
           
           # 1. AIKAKONE 1.75.0 (Vain Anchor CLI:tä varten)
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.75.0
           export PATH="$HOME/.cargo/bin:$PATH"
-          find . -name "Cargo.lock" -type f -delete
           
-          # Taotaan Anchor
+          # 2. ANCHOR 0.30.0
           cargo install anchor-cli --locked --version 0.30.0
           
-          # 2. VAIHTO 1.68.0 -KÄÄNTÄJÄÄN
-          rustup install 1.68.0
-          rustup default 1.68.0
+          # 3. POISTETAAN VANHA LUKKO (Annetaan Cargon generoida uusi, vakaampi)
+          rm -f Cargo.lock
           
-          # 3. THE ABSOLUTE PATCH: Pakotetaan wit-bindgen polvilleen Cargo.toml-tasolla
-          echo "Applying Absolute Patch to Cargo.toml..."
-          cat >> Cargo.toml << 'EOF'
+          # 4. TITANIC BYPASS: Isketään suoraan IDL-louhintaan
+          # Tämä komento yrittää generoida IDL:n lukemalla lähdekoodia, 
+          # välittäen vähemmän riippuvuuksien kääntämisestä.
+          echo "Attempting to parse IDL directly..."
+          mkdir -p target/idl
+          
+          # Käytetään Anchorin omaa parseria, joka on usein joustavampi kuin koko build-prosessi
+          anchor idl build || echo "Direct build failed, trying manual parse..."
+          
+          # Jos se epäonnistuu, kokeillaan tätä:
+          anchor build --idl target/idl || echo "Warning: Build failed, but checking for IDL anyway..."
+          
+          echo "Scanning for payload..."
+          ls -R target/idl/ || echo "IDL not found"
 
-          [profile.release]
-          overflow-checks = true
-
-          [patch.crates-io]
-          # Tämä korvaa KAIKKI wit-bindgen versiot yhdellä toimivalla
-          "wit-bindgen" = { git = "https://github.com/bytecodealliance/wit-bindgen", rev = "v0.19.2" }
-          EOF
-          
-          # 4. GENERATE LOCKFILE
-          echo "Generating 1.68.0 Lockfile..."
-          cargo generate-lockfile
-          
-          # 5. TÄSMÄNEULAT (Muut pahikset)
-          echo "Applying precision pins..."
-          cargo update -p blake3 --precise 1.5.0 || true
-          cargo update -p toml_edit --precise 0.21.0 || true
-          cargo update -p toml_datetime --precise 0.6.3 || true
-          cargo update -p serde_json --precise 1.0.146 || true
-          cargo update -p ryu --precise 1.0.16 || true
-          
-          # 6. JEDI MIND TRICK (V4 -> V3)
-          if grep -q "version = 4" Cargo.lock; then
-              sed -i 's/version = 4/version = 3/' Cargo.lock
-          fi
-          
-          # 7. RAKENNETAAN MOOTTORI
-          echo "=== Phase 3: Build engine ==="
-          anchor build
+      - name: Materialize IDL to Repository
+        run: |
+          git config --global --add safe.directory /__w/solana-sss-engine/solana-sss-engine
+          git config --global user.name "Gandalf"
+          git config --global user.email "stealth@bridge.com"
+          git add -f target/idl/*.json || true
+          git commit -m "chore: reveal idl data_payload [$(date)]" || echo "No changes"
+          git push
