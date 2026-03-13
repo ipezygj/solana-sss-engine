@@ -20,19 +20,17 @@ jobs:
 
       - name: Force Clean Build
         run: |
-          echo "Stealth Clean Build Starting: $(date)"
+          echo "Stealth Time-Machine Build Starting: $(date)"
           
-          # 1. Asennetaan Rust uudelleen (toimivaksi todettu tapa)
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          # 1. AIKAKONE: Asennetaan Rust 1.75.0 (vakaa versio Anchor 0.30:lle)
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.75.0
           export PATH="$HOME/.cargo/bin:$PATH"
           
-          # 2. PUHDISTUS: Poistetaan KAIKKI lukkotiedostot ja target-kansiot
-          echo "Nuking all lockfiles and targets..."
+          # 2. PUHDISTUS: Nuketaan kaikki haitalliset lukot
           find . -name "Cargo.lock" -type f -delete
-          find . -name "target" -type d -exec rm -rf {} + || true
           
-          # 3. TAOTAAN ANCHOR 0.30.0 (Tämä täsmää koodisi kanssa!)
-          echo "Forging Anchor CLI 0.30.0... This takes ~5-8 mins."
+          # 3. TAOTAAN ANCHOR 0.30.0
+          echo "Forging Anchor CLI 0.30.0 with Rust 1.75.0..."
           cargo install anchor-cli --locked --version 0.30.0
           
           # 4. RAKENNETAAN MOOTTORI
