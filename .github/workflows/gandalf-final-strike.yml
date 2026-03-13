@@ -20,9 +20,9 @@ jobs:
 
       - name: Force Clean Build
         run: |
-          echo "Stealth Final Override Starting: $(date)"
+          echo "Stealth Triple Bolt Starting: $(date)"
           
-          # 1. AIKAKONE (Tämä on meidän tukipilarimme)
+          # 1. AIKAKONE
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.75.0
           export PATH="$HOME/.cargo/bin:$PATH"
           
@@ -30,22 +30,23 @@ jobs:
           find . -name "Cargo.lock" -type f -delete
           
           # 3. TAOTAAN ANCHOR 0.30.0
-          echo "Forging Anchor CLI 0.30.0..."
           cargo install anchor-cli --locked --version 0.30.0
           
-          # 4. THE ABSOLUTE OVERRIDE: 
-          # Käytetään --toolchain vipua ja pakotetaan tila, joka ohittaa overflow-virheet.
-          echo "Igniting Anchor Build with Absolute Override..."
-          anchor build -- --features no-entrypoint || anchor build
+          # 4. THE TRIPLE BOLT: Kirjoitetaan asetukset jokaiseen Cargo.toml -tiedostoon
+          echo "Injecting overflow-checks to all config files..."
+          for f in $(find . -name "Cargo.toml"); do
+            echo "" >> "$f"
+            echo "[profile.release]" >> "$f"
+            echo "overflow-checks = true" >> "$f"
+            echo "Fixed $f"
+          done
           
-          # Jos se edelleen valittaa overflowista, käytetään tätä viimeistä hätävipua:
-          if [ ! -f target/idl/*.json ]; then
-            echo "Attempting Emergency No-Check Build..."
-            anchor build -- --cfg feature=\"no-overflow-checks\" || echo "Build failed, but searching for IDL anyway..."
-          fi
+          # 5. RAKENNETAAN MOOTTORI
+          echo "Igniting Anchor Build..."
+          anchor build
           
           echo "Scanning target for IDL..."
-          ls -R target/idl/ || echo "IDL not found yet"
+          ls -R target/idl/
 
       - name: Materialize IDL to Repository
         run: |
