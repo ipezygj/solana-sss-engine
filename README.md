@@ -1,19 +1,25 @@
-# Solana Stablecoin Standard (SSS) SDK V2.1
+# Solana Stablecoin Standard (SSS) 🌐
 
-Modular implementation for SSS-1 and SSS-2 standards on Solana.
+An open-source, production-ready standard and modular SDK for issuing stablecoins on Solana. Built on top of **Token-2022 (Token Extensions)**, SSS provides configurable presets for both decentralized minimal stablecoins and highly regulated, compliant stablecoins.
 
-## Core Features
-- **SSS-1**: Treasury-backed DAO stablecoin logic [cite: 2026-02-25].
-- **SSS-2**: Institutional compliance via Token-2022 Transfer Hooks [cite: 2026-02-25].
-- **Python SDK**: Technical management layer for real-time operations.
+## 📦 The Layers
+1. **Core SDK:** TypeScript/CLI toolkit for initialization and operations.
+2. **Compliance Modules:** On-chain Blacklist (PDA-based) and Transfer Hooks.
+3. **Standard Presets:** Opinionated, ready-to-deploy configurations (SSS-1 & SSS-2).
 
-## Security
-Built with Stealth Opsec and V2.1 Gateway standards [cite: 2026-02-26].
+## ⚖️ Preset Comparison
 
+| Feature | SSS-1 (Minimal) | SSS-2 (Compliant) |
+| :--- | :---: | :---: |
+| **Use Case** | DAOs, Internal tokens | Regulated Fiat-backed (USDC/USDT) |
+| **Mint & Freeze Auth** | ✅ | ✅ |
+| **Permanent Delegate** | ❌ | ✅ (For asset seizure) |
+| **Transfer Hook** | ❌ | ✅ (For blacklist enforcement) |
+| **Default Account Frozen** | ❌ | ❌ |
 
-## 🤖 AI Agent Integration (AI Track)
-SSS-Engine includes a modular **Agentic Framework** (`sdk/agent_core.py`) designed for autonomous treasury operations.
+## 🚀 Quick Start
 
-* **Autonomous Loop:** The agent continuously monitors on-chain solvency and peg stability.
-* **Safety Guardrails:** Built-in circuit breakers prevent the AI from executing unsafe transfers, ensuring institutional compliance.
-* **Action Space:** The AI interacts directly with **Token-2022 Transfer Hooks** to enforce logic at the protocol level.
+    npm install -g @stbr/sss-token
+    sss-token init --preset sss-2 --name "Brazil USD" --symbol "BRUSD"
+
+*For detailed instructions, see the docs/ folder.*
