@@ -20,9 +20,9 @@ jobs:
 
       - name: The Split & Precision Pin
         run: |
-          echo "Stealth Precision Pin V2 Starting: $(date)"
+          echo "Stealth Precision Pin V3 Starting: $(date)"
           
-          # 1. AIKAKONE: Rust 1.75.0 Anchorin kääntämiseen
+          # 1. AIKAKONE
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.75.0
           export PATH="$HOME/.cargo/bin:$PATH"
           find . -name "Cargo.lock" -type f -delete
@@ -31,7 +31,7 @@ jobs:
           echo "Forging Anchor CLI 0.30.0..."
           cargo install anchor-cli --locked --version 0.30.0
           
-          # 3. TYÖKALUJEN VAIHTO: Uusin Rust lukkotiedoston generointiin
+          # 3. TYÖKALUJEN VAIHTO
           echo "Switching to latest stable Rust..."
           rustup default stable
           rustup update
@@ -44,16 +44,18 @@ jobs:
           overflow-checks = true
           EOF
           
-          # 5. WHACK-A-MOLE: Kiinnitetään KAIKKI tulevaisuuden paketit menneisyyteen!
+          # 5. WHACK-A-MOLE: Kiinnitetään KAIKKI tulevaisuuden paketit!
           echo "Generating lockfile and precision-pinning future crates..."
           cargo generate-lockfile
-          cargo update -p blake3 --precise 1.5.0 || true
           
-          # Nämä kaksi pakettia aiheuttivat tuon uusimman virheen:
+          # Edition 2024 kiertäminen
+          cargo update -p blake3 --precise 1.5.0 || true
+          # Solanan kääntäjän (rustc 1.68) yhteensopivuuskorjaukset
           cargo update -p toml_edit --precise 0.21.0 || true
           cargo update -p toml_datetime --precise 0.6.3 || true
+          cargo update -p zstd --precise 0.11.2+zstd.1.5.2 || true
           
-          # 6. JEDI MIND TRICK: Huijataan Solanan kääntäjää V4 -> V3
+          # 6. JEDI MIND TRICK: V4 -> V3
           echo "Downgrading lockfile format from V4 to V3..."
           sed -i 's/version = 4/version = 3/g' Cargo.lock
           
