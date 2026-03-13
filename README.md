@@ -1,5 +1,5 @@
 **🔥 DEVNET DEPLOYMENT PROOF:** ``
-
+9TeoM4XbT1pP9E1rD1x13bZRPQpXgQ7HNDT2o3h5v2Gk
 # Solana Stablecoin Standard (SSS) 🌐
 
 An open-source, production-ready standard and modular SDK for issuing stablecoins on Solana. Built on top of **Token-2022 (Token Extensions)**, SSS provides configurable presets for both decentralized minimal stablecoins and highly regulated, compliant stablecoins.
