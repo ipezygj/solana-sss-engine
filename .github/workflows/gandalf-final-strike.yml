@@ -25,8 +25,6 @@ jobs:
           # 1. AIKAKONE: Rust 1.75.0 Anchorin kääntämiseen
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.75.0
           export PATH="$HOME/.cargo/bin:$PATH"
-          
-          # Siivotaan haamulokot
           find . -name "Cargo.lock" -type f -delete
           
           # 2. TAOTAAN ANCHOR 0.30.0
@@ -34,7 +32,7 @@ jobs:
           cargo install anchor-cli --locked --version 0.30.0
           
           # 3. TYÖKALUJEN VAIHTO: Uusin Rust moottorille
-          echo "Switching to latest stable Rust for the engine build..."
+          echo "Switching to latest stable Rust..."
           rustup default stable
           rustup update
           
@@ -46,12 +44,17 @@ jobs:
           overflow-checks = true
           EOF
           
-          # 5. THE PRECISION PIN: Pakotetaan blake3 versio oikeaoppisesti!
+          # 5. THE PRECISION PIN: Kiinnitetään blake3
           echo "Generating lockfile and precision-pinning blake3 to v1.5.0..."
           cargo generate-lockfile
-          cargo update -p blake3 --precise 1.5.0 || echo "Blake3 pin failed or not present, continuing..."
+          cargo update -p blake3 --precise 1.5.0 || true
           
-          # 6. RAKENNETAAN MOOTTORI
+          # 6. JEDI MIND TRICK: Huijataan Solanan kääntäjää!
+          # Muutetaan V4-tiedosto lennosta V3-muotoon
+          echo "Downgrading lockfile format from V4 to V3..."
+          sed -i 's/version = 4/version = 3/g' Cargo.lock
+          
+          # 7. RAKENNETAAN MOOTTORI
           echo "Igniting Anchor Build..."
           anchor build
           
