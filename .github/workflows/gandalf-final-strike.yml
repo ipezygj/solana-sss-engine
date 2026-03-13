@@ -11,23 +11,31 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # Vaihdetaan Docker Hubin viralliseen ja varmimpaan kuvaan
+    # Palataan konttiin, joka TODISTETUSTI latautui aiemmin
     container:
-      image: coralxyz/anchor:0.31.0
+      image: backpackapp/build:v0.29.0
     
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Build Program
+      - name: Upgrade Engine & Build
         run: |
-          echo "Stealth Build 0.31.0+ Starting: $(date)"
+          echo "Stealth Engine Upgrade Starting: $(date)"
           
-          # MEKAANIKON KIKKA: Poistetaan vanha lukkotiedosto, jotta uusi kääntäjä 
-          # voi luoda puhtaan ja yhteensopivan version automaattisesti.
+          # 1. KORJATAAN RUST (Tämä poistaa sen Cargo.lock v4 -virheen)
+          rustup update stable
+          rustup default stable
           rm -f Cargo.lock
           
-          # Rakennetaan moottori
+          # 2. KORJATAAN ANCHOR (Päivitetään 0.29.0 -> 0.31.2 lennosta)
+          # Kontissa on onneksi 'avm' (Anchor Version Manager) valmiina!
+          avm install 0.31.2
+          avm use 0.31.2
+          anchor --version
+          
+          # 3. RAKENNETAAN MOOTTORI
+          echo "Igniting Anchor Build..."
           anchor build
           
           echo "Scanning target for IDL..."
