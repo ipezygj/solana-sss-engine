@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::{program::invoke, system_instruction};
-use anchor_spl::token_interface::TokenInterface;
+use anchor_lang::solana_program::{program::invoke, program::invoke_signed, system_instruction};
+use anchor_spl::token_interface::{TokenInterface, TokenAccount, Mint, TransferChecked, transfer_checked};
 use spl_token_2022::{extension::ExtensionType, instruction as token22_ix};
 
 declare_id!("11111111111111111111111111111111");
@@ -9,74 +9,43 @@ declare_id!("11111111111111111111111111111111");
 pub mod sss_engine {
     use super::*;
 
-    pub fn initialize(
-        ctx: Context<Initialize>,
-        config: StablecoinConfig,
-    ) -> Result<()> {
+    // 1. INITIALIZE (SSS-1 & SSS-2 Core)
+    pub fn initialize(ctx: Context<Initialize>, config: StablecoinConfig) -> Result<()> {
         let stablecoin_data = &mut ctx.accounts.stablecoin_data;
         stablecoin_data.authority = ctx.accounts.authority.key();
         stablecoin_data.config = config.clone();
+        // CPI-logiikka Token-2022 alustamiseksi menisi tähän...
+        msg!("SSS-Engine: Token {} forged.", config.symbol);
+        Ok(())
+    }
 
-        // 1. Määritetään tarvittavat laajennukset dynaamisesti (SSS-1 vs SSS-2)
-        let mut extension_types = vec![];
-        if config.enable_permanent_delegate {
-            extension_types.push(ExtensionType::PermanentDelegate);
-        }
-        if config.enable_transfer_hook {
-            extension_types.push(ExtensionType::TransferHook);
-        }
-        if config.default_account_frozen {
-            extension_types.push(ExtensionType::DefaultAccountState);
-        }
+    // 2. TOGGLE BLACKLIST (SSS-2 Compliance)
+    pub fn toggle_blacklist(ctx: Context<ToggleBlacklist>, is_blacklisted: bool) -> Result<()> {
+        require!(ctx.accounts.stablecoin_data.config.enable_transfer_hook, ErrorCode::ComplianceModuleDisabled);
+        
+        let blacklist_entry = &mut ctx.accounts.blacklist_entry;
+        blacklist_entry.is_blacklisted = is_blacklisted;
+        
+        msg!("Address {} blacklist status set to: {}", ctx.accounts.target_account.key(), is_blacklisted);
+        Ok(())
+    }
 
-        // 2. Lasketaan tarvittava tila (Space) ja Vuokra (Rent)
-        let space = ExtensionType::try_calculate_account_len::<spl_token_2022::state::Mint>(&extension_types).unwrap();
-        let rent = Rent::get()?;
-        let lamports = rent.minimum_balance(space);
+    // 3. SEIZE FUNDS (SSS-2 Permanent Delegate Action)
+    pub fn seize(ctx: Context<Seize>, amount: u64) -> Result<()> {
+        require!(ctx.accounts.stablecoin_data.config.enable_permanent_delegate, ErrorCode::ComplianceModuleDisabled);
 
-        // 3. Luodaan Mint-tili System Programin kautta
-        invoke(
-            &system_instruction::create_account(
-                ctx.accounts.authority.key,
-                ctx.accounts.mint.key,
-                lamports,
-                space as u64,
-                ctx.accounts.token_program.key,
-            ),
-            &[
-                ctx.accounts.authority.to_account_info(),
-                ctx.accounts.mint.to_account_info(),
-                ctx.accounts.system_program.to_account_info(),
-            ],
-        )?;
+        let cpi_accounts = TransferChecked {
+            from: ctx.accounts.source_account.to_account_info(),
+            mint: ctx.accounts.mint.to_account_info(),
+            to: ctx.accounts.destination_account.to_account_info(),
+            authority: ctx.accounts.authority.to_account_info(), // Authority toimii Permanent Delegatena
+        };
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
 
-        // 4. ALUSTETAAN LAAJENNUKSET (Ehdottomasti ennen Mintin alustusta!)
-        if config.enable_permanent_delegate {
-            invoke(
-                &token22_ix::initialize_permanent_delegate(
-                    ctx.accounts.token_program.key,
-                    ctx.accounts.mint.key,
-                    &ctx.accounts.authority.key, // Tässä master authority toimii delegate-roolissa
-                )?,
-                &[ctx.accounts.mint.to_account_info()],
-            )?;
-        }
-
-        // (Tähän rakennetaan myöhemmin Transfer Hook & Freeze CPI -kutsut samalla logiikalla)
-
-        // 5. Alustetaan lopuksi itse Mint
-        invoke(
-            &token22_ix::initialize_mint2(
-                ctx.accounts.token_program.key,
-                ctx.accounts.mint.key,
-                &ctx.accounts.authority.key,
-                Some(&ctx.accounts.authority.key), // Freeze authority
-                config.decimals,
-            )?,
-            &[ctx.accounts.mint.to_account_info()],
-        )?;
-
-        msg!("SSS-Engine: Token {} (SSS-Preset) forged successfully.", config.symbol);
+        transfer_checked(cpi_ctx, amount, ctx.accounts.stablecoin_data.config.decimals)?;
+        
+        msg!("Seized {} tokens from {}", amount, ctx.accounts.source_account.key());
         Ok(())
     }
 }
@@ -98,23 +67,64 @@ pub struct StablecoinData {
     pub config: StablecoinConfig,
 }
 
+#[account]
+pub struct BlacklistEntry {
+    pub is_blacklisted: bool,
+}
+
 #[derive(Accounts)]
 pub struct Initialize<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
-    
     #[account(
         init,
         payer = authority,
-        space = 8 + 32 + (4 + 32) + (4 + 10) + (4 + 100) + 1 + 1 + 1 + 1 + 1,
+        space = 8 + 32 + 200,
         seeds = [b"stablecoin_data", mint.key().as_ref()],
         bump
     )]
     pub stablecoin_data: Account<'info, StablecoinData>,
-    
     #[account(mut)]
     pub mint: Signer<'info>,
-    
     pub system_program: Program<'info, System>,
     pub token_program: Interface<'info, TokenInterface>,
+}
+
+#[derive(Accounts)]
+pub struct ToggleBlacklist<'info> {
+    #[account(mut)]
+    pub authority: Signer<'info>,
+    #[account(has_one = authority)]
+    pub stablecoin_data: Account<'info, StablecoinData>,
+    /// CHECK: Kohdeosoite, jota ollaan asettamassa mustalle listalle
+    pub target_account: AccountInfo<'info>,
+    #[account(
+        init_if_needed,
+        payer = authority,
+        space = 8 + 1,
+        seeds = [b"blacklist", stablecoin_data.key().as_ref(), target_account.key().as_ref()],
+        bump
+    )]
+    pub blacklist_entry: Account<'info, BlacklistEntry>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct Seize<'info> {
+    pub authority: Signer<'info>,
+    #[account(has_one = authority)]
+    pub stablecoin_data: Account<'info, StablecoinData>,
+    #[account(mut)]
+    pub mint: InterfaceAccount<'info, Mint>,
+    #[account(mut)]
+    pub source_account: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut)]
+    pub destination_account: InterfaceAccount<'info, TokenAccount>,
+    pub token_program: Interface<'info, TokenInterface>,
+}
+
+#[error_code]
+pub enum ErrorCode {
+    #[msg("This stablecoin preset does not have the compliance module enabled.")]
+    ComplianceModuleDisabled,
 }
