@@ -1,0 +1,20 @@
+[package]
+name = "sss_engine"
+version = "0.1.0"
+description = "Solana Stablecoin Standard Engine"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "sss_engine"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = "0.30.0"
+anchor-spl = { version = "0.30.0", features = ["token_2022", "token"] }
