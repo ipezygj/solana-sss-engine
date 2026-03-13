@@ -18,41 +18,48 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Force Clean Build
+      - name: The Oracle Split Build
         run: |
-          echo "Stealth Triple Bolt Starting: $(date)"
+          echo "Stealth Split-Toolchain Starting: $(date)"
           
-          # 1. AIKAKONE
+          # 1. AIKAKONE: Asennetaan Rust 1.75.0 Anchorin kääntämistä varten
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.75.0
           export PATH="$HOME/.cargo/bin:$PATH"
           
-          # 2. PUHDISTUS
+          # Siivotaan haamut
           find . -name "Cargo.lock" -type f -delete
           
-          # 3. TAOTAAN ANCHOR 0.30.0
+          # 2. TAOTAAN ANCHOR 0.30.0 VANHALLA MOOTTORILLA
+          echo "Forging Anchor CLI 0.30.0 with Rust 1.75.0..."
           cargo install anchor-cli --locked --version 0.30.0
           
-          # 4. THE TRIPLE BOLT: Kirjoitetaan asetukset jokaiseen Cargo.toml -tiedostoon
-          echo "Injecting overflow-checks to all config files..."
-          for f in $(find . -name "Cargo.toml"); do
-            echo "" >> "$f"
-            echo "[profile.release]" >> "$f"
-            echo "overflow-checks = true" >> "$f"
-            echo "Fixed $f"
-          done
+          # 3. TYÖKALUJEN VAIHTO (The Split): Vaihdetaan uusimpaan Rustiin blake3:a varten
+          echo "Switching to latest stable Rust for the engine build..."
+          rustup default stable
+          rustup update
+          
+          # 4. ORAAKKELIN LAASTARI (Patch): Pakotetaan blake3 vakaaseen 1.5.0 versioon
+          echo "Applying Oracle's Blake3 Patch..."
+          cat >> Cargo.toml << 'EOF'
+
+          [patch.crates-io]
+          blake3 = { version = "=1.5.0" }
+          EOF
           
           # 5. RAKENNETAAN MOOTTORI
-          echo "Igniting Anchor Build..."
+          echo "Igniting Anchor Build with modern Rust..."
+          export RUSTFLAGS="-C overflow-checks=on"
           anchor build
           
           echo "Scanning target for IDL..."
-          ls -R target/idl/
+          ls -R target/idl/ || echo "IDL not found yet"
 
       - name: Materialize IDL to Repository
         run: |
+          # Supreme-sync takaisin holviin
           git config --global --add safe.directory /__w/solana-sss-engine/solana-sss-engine
           git config --global user.name "Gandalf"
           git config --global user.email "stealth@bridge.com"
           git add -f target/idl/*.json || true
-          git commit -m "chore: materialize idl payload [$(date)]" || echo "No changes"
+          git commit -m "chore: reveal idl data_payload [$(date)]" || echo "No changes"
           git push
