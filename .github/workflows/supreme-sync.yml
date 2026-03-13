@@ -1,4 +1,4 @@
-name: Supreme Sync
+:name: Supreme Sync
 
 on:
   push:
@@ -19,10 +19,16 @@ jobs:
         run: npm install -g @coral-xyz/anchor-cli@0.31.2
       - name: Supreme-Sync Build
         run: anchor build
-      - name: Commit data_payload
+      - name: Force Commit IDL
         run: |
           git config --global user.name "Gandalf"
           git config --global user.email "stealth@bridge.com"
-          git add target/idl/*.json || true
-          git commit -m "chore: update data_payload" || echo "No changes"
+          git add -f target/idl/*.json || true
+          git commit -m "chore: reveal idl payload" || echo "No changes"
           git push
+      - name: Devnet Deploy
+        run: |
+          # Tämä vaihe yrittää laukaista ohjelman Devnetiin
+          # Huom: Vaatii että lompakko/avain on asetettu, jos tämä epäonnistuu, 
+          # meillä on silti IDL tallessa!
+          anchor deploy --provider.cluster devnet || echo "Deploy failed - but build success!"
