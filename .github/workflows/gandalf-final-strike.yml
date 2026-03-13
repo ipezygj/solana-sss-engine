@@ -1,57 +1,7 @@
-name: Final Strike
+[workspace]
+members = [
+    "programs/*"
+]
 
-on:
-  workflow_dispatch:
-  push:
-    branches: [ main ]
-
-permissions:
-  contents: write
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    container:
-      image: backpackapp/build:v0.29.0
-    
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Forge Engine & Build
-        run: |
-          echo "Stealth Forge Starting: $(date)"
-          
-          # 1. Päivitetään uusi Rust-kääntäjä
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          export PATH="$HOME/.cargo/bin:$PATH"
-          rm -f Cargo.lock
-          
-          # Siivotaan NPM-sotkut pois tieltä
-          npm uninstall -g @coral-xyz/anchor-cli || true
-          
-          # 2. THE BLACKSMITH METHOD: Taotaan virallinen Anchor 0.31.0!
-          echo "Forging custom Anchor CLI 0.31.0... This will take ~5-8 minutes. Patience!"
-          cargo install anchor-cli --locked --version 0.31.0
-          
-          # Varmistus
-          anchor --version
-          
-          # 3. RAKENNETAAN MOOTTORI
-          echo "Igniting Anchor Build..."
-          anchor build
-          
-          echo "Scanning target for IDL..."
-          ls -R target/idl/
-
-      - name: Materialize IDL to Repository
-        run: |
-          # Git-oikeudet kuntoon kontin sisällä
-          git config --global --add safe.directory /__w/solana-sss-engine/solana-sss-engine
-          git config --global user.name "Gandalf"
-          git config --global user.email "stealth@bridge.com"
-          
-          # Pakotetaan IDL näkyviin holvissa
-          git add -f target/idl/*.json || true
-          git commit -m "chore: materialize idl payload [$(date)]" || echo "No changes"
-          git push
+# Poistetaan overflow-checks toistaiseksi, jotta saamme buildin läpi
+# ilman versioristiriitoja 0.30.0:ssa.
