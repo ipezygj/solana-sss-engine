@@ -18,37 +18,39 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: The Oracle Split Build
+      - name: The Oracle Split & Final Bolt
         run: |
-          echo "Stealth Split-Toolchain Starting: $(date)"
+          echo "Stealth Split-Toolchain + Final Bolt Starting: $(date)"
           
-          # 1. AIKAKONE: Asennetaan Rust 1.75.0 Anchorin kääntämistä varten
+          # 1. AIKAKONE: Rust 1.75.0 Anchorin kääntämiseen
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.75.0
           export PATH="$HOME/.cargo/bin:$PATH"
           
-          # Siivotaan haamut
+          # Siivotaan haamulokot
           find . -name "Cargo.lock" -type f -delete
           
-          # 2. TAOTAAN ANCHOR 0.30.0 VANHALLA MOOTTORILLA
+          # 2. TAOTAAN ANCHOR 0.30.0
           echo "Forging Anchor CLI 0.30.0 with Rust 1.75.0..."
           cargo install anchor-cli --locked --version 0.30.0
           
-          # 3. TYÖKALUJEN VAIHTO (The Split): Vaihdetaan uusimpaan Rustiin blake3:a varten
+          # 3. TYÖKALUJEN VAIHTO: Uusin Rust moottorille
           echo "Switching to latest stable Rust for the engine build..."
           rustup default stable
           rustup update
           
-          # 4. ORAAKKELIN LAASTARI (Patch): Pakotetaan blake3 vakaaseen 1.5.0 versioon
-          echo "Applying Oracle's Blake3 Patch..."
+          # 4. THE ULTIMATE PATCH: Blake3 + Overflow Checks yhdessä!
+          echo "Applying Oracle's patch AND Anchor's mandatory seatbelt..."
           cat >> Cargo.toml << 'EOF'
 
           [patch.crates-io]
           blake3 = { version = "=1.5.0" }
+
+          [profile.release]
+          overflow-checks = true
           EOF
           
           # 5. RAKENNETAAN MOOTTORI
-          echo "Igniting Anchor Build with modern Rust..."
-          export RUSTFLAGS="-C overflow-checks=on"
+          echo "Igniting Anchor Build..."
           anchor build
           
           echo "Scanning target for IDL..."
@@ -56,7 +58,6 @@ jobs:
 
       - name: Materialize IDL to Repository
         run: |
-          # Supreme-sync takaisin holviin
           git config --global --add safe.directory /__w/solana-sss-engine/solana-sss-engine
           git config --global user.name "Gandalf"
           git config --global user.email "stealth@bridge.com"
