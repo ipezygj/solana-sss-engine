@@ -27,13 +27,12 @@ jobs:
           export PATH="$HOME/.cargo/bin:$PATH"
           rm -f Cargo.lock
           
-          # Siivotaan NPM-sotkut alta pois
+          # Siivotaan NPM-sotkut pois tieltä
           npm uninstall -g @coral-xyz/anchor-cli || true
           
-          # 2. THE BLACKSMITH METHOD: Taotaan Anchor 0.31.2 suoraan lähdekoodista!
-          # Tämä sovittaa työkalun täydellisesti nykyiseen runkoon.
-          echo "Forging custom Anchor CLI... This will take ~5-8 minutes. Patience!"
-          cargo install anchor-cli --locked --version 0.31.2
+          # 2. THE BLACKSMITH METHOD: Taotaan virallinen Anchor 0.31.0!
+          echo "Forging custom Anchor CLI 0.31.0... This will take ~5-8 minutes. Patience!"
+          cargo install anchor-cli --locked --version 0.31.0
           
           # Varmistus
           anchor --version
