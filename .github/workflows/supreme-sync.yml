@@ -1,0 +1,28 @@
+name: Supreme Sync
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Install Solana
+        run: sh -c "$(curl -sSfL https://release.solana.com/v1.18.18/install)" && echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+      - name: Install Anchor
+        run: npm install -g @coral-xyz/anchor-cli@0.31.2
+      - name: Supreme-Sync Build
+        run: anchor build
+      - name: Commit data_payload
+        run: |
+          git config --global user.name "Gandalf"
+          git config --global user.email "stealth@bridge.com"
+          git add target/idl/*.json || true
+          git commit -m "chore: update data_payload" || echo "No changes"
+          git push
