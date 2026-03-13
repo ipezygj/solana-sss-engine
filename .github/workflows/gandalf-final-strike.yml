@@ -1,6 +1,3 @@
-""" Technical implementation for Hummingbot Gateway V2.1. """
-# Note: Using V2.1 standards for Solana SSS Engine build automation.
-
 name: Final Strike
 
 on:
@@ -18,8 +15,8 @@ jobs:
       - name: Force Install Solana
         run: |
           echo "Initiating Stealth Deployment at: $(date)"
-          # Käytetään wgetiä curlin sijaan ja lisätään 5 yritystä SSL-virheiden varalta
-          wget --tries=5 --waitretry=5 https://release.solana.com/v1.18.18/install
+          # SSL-virheiden kierto: wget + retry
+          wget --tries=10 --waitretry=10 --retry-connrefused https://release.solana.com/v1.18.18/install
           chmod +x install
           ./install
           # Pakotetaan polku aktiiviseksi
@@ -29,7 +26,6 @@ jobs:
 
       - name: Install Anchor CLI
         run: |
-          # Pakotetaan asennus, jotta välimuisti ei hypi yli
           npm install -g @coral-xyz/anchor-cli@0.31.2 --force
           anchor --version
 
@@ -45,7 +41,7 @@ jobs:
         run: |
           git config --global user.name "Gandalf"
           git config --global user.email "stealth@bridge.com"
-          # Pakotetaan IDL näkyviin vaikka se olisi gitilloressa
+          # Pakotetaan IDL näkyviin
           git add -f target/idl/*.json || true
           git commit -m "chore: reveal idl payload [$(date)]" || echo "No changes to commit"
           git push
