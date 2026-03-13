@@ -20,7 +20,7 @@ jobs:
 
       - name: The Flawless Nuke Build
         run: |
-          echo "Stealth Flawless Nuke Starting: $(date)"
+          echo "Stealth Flawless Nuke V2 Starting: $(date)"
           
           # 1. AIKAKONE 1.75.0 (Vain Anchor CLI:tä varten)
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.75.0
@@ -36,7 +36,7 @@ jobs:
           rustup install 1.68.0
           rustup default 1.68.0
           
-          # 3. ANCHORIN TURVAVYÖ (Ilman Oraakkelin rikkinäistä patchia!)
+          # 3. ANCHORIN TURVAVYÖ
           echo "Injecting Seatbelt..."
           cat >> Cargo.toml << 'EOF'
 
@@ -44,7 +44,7 @@ jobs:
           overflow-checks = true
           EOF
           
-          # 4. GENERATE LOCKFILE: MSRV suodattaa nyt liian uudet paketit pois
+          # 4. GENERATE LOCKFILE
           echo "Generating 1.68.0 Lockfile..."
           cargo generate-lockfile
           
@@ -55,6 +55,7 @@ jobs:
           cargo update -p toml_datetime --precise 0.6.3 || true
           cargo update -p serde_json --precise 1.0.146 || true
           cargo update -p ryu --precise 1.0.16 || true
+          cargo update -p wit-bindgen --precise 0.19.2 || true
           
           # 6. JEDI MIND TRICK: Varmistetaan V3-muoto
           echo "Downgrading lockfile format if needed..."
