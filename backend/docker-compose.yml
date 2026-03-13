@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  sss-backend:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - SOLANA_RPC_URL=https://api.devnet.solana.com
+    volumes:
+      - ./audit-trail.log:/app/audit-trail.log
+    restart: unless-stopped
