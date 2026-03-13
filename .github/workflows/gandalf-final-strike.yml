@@ -20,7 +20,7 @@ jobs:
 
       - name: The Flawless Nuke Build
         run: |
-          echo "Stealth Flawless Nuke V2 Starting: $(date)"
+          echo "Stealth Flawless Nuke Final Starting: $(date)"
           
           # 1. AIKAKONE 1.75.0 (Vain Anchor CLI:tä varten)
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.75.0
@@ -48,7 +48,7 @@ jobs:
           echo "Generating 1.68.0 Lockfile..."
           cargo generate-lockfile
           
-          # 5. TÄSMÄNEULAT: Varmistetaan pahimmat myyrät virallisella tavalla
+          # 5. TÄSMÄNEULAT: Tässä on koko käärmeenpesän vastalääke kerralla!
           echo "Applying precision pins safely..."
           cargo update -p blake3 --precise 1.5.0 || true
           cargo update -p toml_edit --precise 0.21.0 || true
