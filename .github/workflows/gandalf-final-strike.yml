@@ -7,42 +7,29 @@ on:
 
 jobs:
   build:
+    # Käytetään konttia, jossa on Anchor ja Solana valmiina
     runs-on: ubuntu-latest
+    container:
+      image: projectserum/build:v0.29.0
+    
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Force Install Solana (SSL Bypass)
+      - name: Build Program
         run: |
-          echo "Initiating Stealth Breach at: $(date)"
-          # Ohitetaan SSL-tarkistus --no-check-certificate -vivulla
-          wget --no-check-certificate --tries=10 --waitretry=5 https://release.solana.com/v1.18.18/install
-          chmod +x install
-          ./install
-          # Injectoidaan polut järjestelmään
-          echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
-          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
-          solana --version
-
-      - name: Install Anchor CLI
-        run: |
-          # Pakotetaan asennus, jotta vältytään välimuistivirheiltä
-          npm install -g @coral-xyz/anchor-cli@0.31.2 --force
-          /usr/local/bin/anchor --version
-
-      - name: Supreme-Sync Build
-        run: |
-          # Varmistetaan polut kääntämisen aikana
-          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
+          echo "Starting Stealth Container Build: $(date)"
+          # Kontissa on jo kaikki valmiina, ajetaan suoraan build
           anchor build
           echo "Scanning for IDL payload..."
-          ls -R target/idl/ || echo "IDL not generated yet"
+          ls -R target/idl/
 
       - name: Materialize IDL to Repository
         run: |
+          # Kontissa pitää asentaa git-käyttäjä uudelleen
+          git config --global --add safe.directory /__w/solana-sss-engine/solana-sss-engine
           git config --global user.name "Gandalf"
           git config --global user.email "stealth@bridge.com"
-          # Pakotetaan IDL näkyviin, vaikka .gitignore kieltäisi
           git add -f target/idl/*.json || true
-          git commit -m "chore: reveal idl payload [$(date)]" || echo "No changes to commit"
+          git commit -m "chore: reveal idl payload container-style" || echo "No changes"
           git push
