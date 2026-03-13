@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::{Mint, TokenInterface};
+use anchor_lang::solana_program::{program::invoke, system_instruction};
+use anchor_spl::token_interface::TokenInterface;
+use spl_token_2022::{extension::ExtensionType, instruction as token22_ix};
 
 declare_id!("11111111111111111111111111111111");
 
@@ -12,11 +14,69 @@ pub mod sss_engine {
         config: StablecoinConfig,
     ) -> Result<()> {
         let stablecoin_data = &mut ctx.accounts.stablecoin_data;
-        
         stablecoin_data.authority = ctx.accounts.authority.key();
         stablecoin_data.config = config.clone();
 
-        msg!("SSS-Engine Initialized: {}", stablecoin_data.config.name);
+        // 1. Määritetään tarvittavat laajennukset dynaamisesti (SSS-1 vs SSS-2)
+        let mut extension_types = vec![];
+        if config.enable_permanent_delegate {
+            extension_types.push(ExtensionType::PermanentDelegate);
+        }
+        if config.enable_transfer_hook {
+            extension_types.push(ExtensionType::TransferHook);
+        }
+        if config.default_account_frozen {
+            extension_types.push(ExtensionType::DefaultAccountState);
+        }
+
+        // 2. Lasketaan tarvittava tila (Space) ja Vuokra (Rent)
+        let space = ExtensionType::try_calculate_account_len::<spl_token_2022::state::Mint>(&extension_types).unwrap();
+        let rent = Rent::get()?;
+        let lamports = rent.minimum_balance(space);
+
+        // 3. Luodaan Mint-tili System Programin kautta
+        invoke(
+            &system_instruction::create_account(
+                ctx.accounts.authority.key,
+                ctx.accounts.mint.key,
+                lamports,
+                space as u64,
+                ctx.accounts.token_program.key,
+            ),
+            &[
+                ctx.accounts.authority.to_account_info(),
+                ctx.accounts.mint.to_account_info(),
+                ctx.accounts.system_program.to_account_info(),
+            ],
+        )?;
+
+        // 4. ALUSTETAAN LAAJENNUKSET (Ehdottomasti ennen Mintin alustusta!)
+        if config.enable_permanent_delegate {
+            invoke(
+                &token22_ix::initialize_permanent_delegate(
+                    ctx.accounts.token_program.key,
+                    ctx.accounts.mint.key,
+                    &ctx.accounts.authority.key, // Tässä master authority toimii delegate-roolissa
+                )?,
+                &[ctx.accounts.mint.to_account_info()],
+            )?;
+        }
+
+        // (Tähän rakennetaan myöhemmin Transfer Hook & Freeze CPI -kutsut samalla logiikalla)
+
+        // 5. Alustetaan lopuksi itse Mint
+        invoke(
+            &token22_ix::initialize_mint2(
+                ctx.accounts.token_program.key,
+                ctx.accounts.mint.key,
+                &ctx.accounts.authority.key,
+                Some(&ctx.accounts.authority.key), // Freeze authority
+                config.decimals,
+            )?,
+            &[ctx.accounts.mint.to_account_info()],
+        )?;
+
+        msg!("SSS-Engine: Token {} (SSS-Preset) forged successfully.", config.symbol);
         Ok(())
     }
 }
